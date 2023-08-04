@@ -77,8 +77,9 @@ def replyToSlashCommand(ack, payload):
     payload.get('text')
     try:
         # For information about the different models, see OpenAI API documentation.
+        # temperature determines the "creativity" of the created response
         # max_tokens determines the maximum length of the response. API limit is 4000 at the time of writing this comment.
-        response = openai.Completion.create(model="text-davinci-003", prompt=payload.get('text'), temperature=0.6, max_tokens=4000)
+        response = openai.Completion.create(model="gpt-4", prompt=payload.get('text'), temperature=0.6, max_tokens=8192)
         parsedResponse = response["choices"][0]["text"]
         # Call the conversations.list method using the WebClient
         result = client.chat_postMessage(
