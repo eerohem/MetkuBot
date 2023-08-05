@@ -52,6 +52,7 @@ translator = deepl.Translator(os.getenv("DEEPL_AUTH_KEY"))
 
 # Add functionality here
 conversation_history = []
+# ID of the channel you want to send the message to
 
 @app.event("message")
 def handle_message_events(body, logger):
@@ -77,10 +78,13 @@ def replyToSlashCommand(ack, payload):
     payload.get('text')
     try:
         # For information about the different models, see OpenAI API documentation.
-        # temperature determines the "creativity" of the created response
-        # max_tokens determines the maximum length of the response. API limit is 4000 at the time of writing this comment.
-        response = openai.Completion.create(model="gpt-4", prompt=payload.get('text'), temperature=0.6, max_tokens=8192)
-        parsedResponse = response["choices"][0]["text"]
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": payload.get('text')}
+            ]
+        )
+        parsedResponse = response.choices[0].message.content
         # Call the conversations.list method using the WebClient
         result = client.chat_postMessage(
             channel=payload.get('channel_id'),
@@ -156,6 +160,42 @@ def replyWithTranslatedText(ack, payload):
         )
     except SlackApiError as e:
         print(f"Error: {e}")
+
+@app.event("app_mention")
+def replyToMention(response):
+    # ID of channel you want to post message to
+    channel_id = "C040X8ZPHNG"  # This can be found with getChannelId() function
+    try:
+    # Call the conversations.history method using the WebClient
+    # The client passes the token you included in initialization    
+        result = client.conversations_history(
+            channel=channel_id,
+            latest="",
+            limit=1
+        )
+        message = result["messages"][0]
+
+    except SlackApiError as e:
+        print(f"Error: {e}")
+
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": message["text"]}
+            ]
+        )
+        parsedResponse = response.choices[0].message.content
+        # Call the conversations.list method using the WebClient
+        result = client.chat_postMessage(
+            channel=channel_id,
+            text=parsedResponse
+        )
+        # Print result, which includes information about the message (like TS)
+        print(response)
+
+    except SlackApiError as e:
+        print(f"Error: {e}")
     
 # @app.event("app_home_opened") etc
 @app.event("app_home_opened")
@@ -214,7 +254,77 @@ def update_home_tab(client, event, logger):
 				"type": "plain_text",
 				"text": "Changelog"
 			}
-		}
+		},
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "4.8.\n\n- Updated model to gpt-3.5-turbo\n- GPT-4 next month"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "31.3.\n\n- Added Swedish translation - /svenska."
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "21.3.\n\n- New slash command: /translate [your text] translates text into English\n- /suomeksi - translates text into Finnish"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "14.3.\n\n- Added new slash commands:\n    - /find [search string] - looks for matching events from Kide.app.\n    - /image [prompt] - generates an image with DALL-E API \n- Parsed datetimes correctly and made messages prettier in general."
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "13.3.\n\n- Bot can now be used with slash commands\n- Usage: /prompt [your prompt here].\n- Slash commands can be used from any channel, just have to add the bot to the channel before they work. (/add)"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "3.3.\n\n- More tokens. Bot can now generate max 4000 tokens (limit of the API)."
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "10.2.\n\n- Fixed issue with ngrok disconnecting when management connection was killed.\n- Fixed issue with bot process killing itself when management connection was killed.\n- Gave a bit more temperature for the bot so it's a bit more creative."
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "7.2. 2023\n\n- OpenAI API integration - bot can now send AI generated messages from a prompt (local only)"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "6.2. 2023 - 0030B\n\n- Basic functionality added - bot can now send messages on command (local only)"
+            }
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "9.2. 0000B\n\n- Alpha release v0.01"
+            }
+        }
 	    ]
       }
     )
