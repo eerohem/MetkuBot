@@ -7,7 +7,7 @@ __credits__     = ["Eero Hemminki, Metropolia UAS Student Union METKA"]
 __license__     = "GPL"
 __version__     = "1.0.1"
 __maintainer__  = "Eero Hemminki"
-__email__       = "eero.hemminki@metkaweb.fi"
+__email__       = "eero.hemminki@nitor.com"
 
 import logging
 import os
